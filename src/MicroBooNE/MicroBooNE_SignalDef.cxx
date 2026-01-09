@@ -214,7 +214,14 @@ bool isNCpi0(FitEvent* event) {
 
 }
 
-
+bool isKDAR(FitEvent* event){
+  // Check that we have a numuCC event
+  int nu_pdg = event->GetBeamNeutrinoPDG();
+  if(nu_pdg != 14) return false;
+  if(event->NumFSParticle(13) != 1) return false;
+  // Double check the energy range
+  if(event->Enu()<235 || event->Enu()>236) return false;
+}
 
     //----------------------------------------//
 

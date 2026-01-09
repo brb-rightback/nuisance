@@ -55,6 +55,8 @@ std::vector<FitParticle*> GetCC1Mu1pProtonsInPS(FitEvent* event);
  */
 bool isNCpi0(FitEvent* event);
 
+bool isKDAR(FitEvent* event);
+
   }  // namespace MicroBooNE
 }  // namespace SignalDef
 
