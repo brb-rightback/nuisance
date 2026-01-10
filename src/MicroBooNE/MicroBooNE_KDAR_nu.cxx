@@ -177,9 +177,9 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
     Kp = event->GetHMFSParticle(2212)->KE();
     ThetaP = event->GetHMFSParticle(2212)->fP.Vect().Theta();
   }
-  double sprtQ2 = sqrt(event->GetQ2());
+  double sprtQ2 = sqrt(event->GetQ2())*1000; // GeV->MeV
   double nu = event->Enu() - event->GetHMFSParticle(13)->E();
-  double q = sprtQ2*sprtQ2 - nu*nu;
+  double q = sqrt(sprtQ2*sprtQ2 + nu*nu);
 
   if (fDist == kKmu) {
     fXVar = Kmu; 
@@ -263,8 +263,8 @@ int MicroBooNE_KDAR_nu::GetBinTrueThetaP(double Kp, double ThetaP){
 
 int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Kp, double Kmu){
 
-  bool found_slice = -1;
-  bool found_bin = -1;
+  int found_slice = -1;
+  int found_bin = -1;
   int slice_width=12;
   int slice_min = 0;
   int slice_max = 120;
@@ -290,7 +290,7 @@ int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Kp, double Kmu){
   // Check all the bins
   for(int bin=0; bin<nbins; bin++){
     // First check overflow
-    if(Kp>max){
+    if(Kmu>max){
       found_bin = nbins-1;
       break;
     }
@@ -374,6 +374,27 @@ void MicroBooNE_KDAR_nu::ApplySmearingMatrix() {
   fMCHist = (TH1D *)smeared->Clone();
   fMCStat = (TH1D *)smeared_stat->Clone();
 
+/*
+  // Now normalize to unity
+  double norm_factor=1;
+  for (int rbin = 0; rbin < n_rbins; ++rbin) {
+    norm_factor+=fMCHist->GetBinContent(rbin+1);
+  }
+  fMCHist->Scale(1/norm_factor);
+  fMCStat->Scale(1/norm_factor);
+*/
+
+  return;
+
+}
+
+
+void MicroBooNE_KDAR_nu::ConvertEventRates() {
+
+  MicroBooNE_KDAR_nu::ApplySmearingMatrix();
+  Measurement1D::ConvertEventRates();
+
+  int n_rbins=fMCHist->GetNbinsX();
   // Now normalize to unity
   double norm_factor=1;
   for (int rbin = 0; rbin < n_rbins; ++rbin) {
@@ -383,11 +404,6 @@ void MicroBooNE_KDAR_nu::ApplySmearingMatrix() {
   fMCStat->Scale(1/norm_factor);
 
   return;
-}
 
-
-void MicroBooNE_KDAR_nu::ConvertEventRates() {
-  MicroBooNE_KDAR_nu::ApplySmearingMatrix();
-  Measurement1D::ConvertEventRates();
 }
 
