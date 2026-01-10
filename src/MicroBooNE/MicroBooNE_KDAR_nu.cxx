@@ -35,11 +35,11 @@ MicroBooNE_KDAR_nu::MicroBooNE_KDAR_nu(nuiskey samplekey) {
     fMCHist_true = new TH1D("MicroBooNE_KDAR_Kmu_nu_MCHist_true",";K_{#mu} (MeV)",26,0,130);
     fMCStat_true = new TH1D("MicroBooNE_KDAR_Kmu_nu_MCStat_true",";K_{#mu} (MeV)",26,0,130);
   }
-  else if (!name.compare("MicroBooNE_KDAR_CosMu_nu")) {
-    fDist = kCosMu;
-    objSuffix = "CosMu";
-    fSettings.SetXTitle("cos#theta_{#mu}^{reco}");
-    fSettings.SetYTitle("1/#sigma d#sigma/dcos#theta_{#mu}^{reco}");
+  else if (!name.compare("MicroBooNE_KDAR_ThetaMu_nu")) {
+    fDist = kThetaMu;
+    objSuffix = "ThetaMu";
+    fSettings.SetXTitle("#theta_{#mu}^{reco}");
+    fSettings.SetYTitle("1/#sigma d#sigma/d#theta_{#mu}^{reco}");
     // nothing implemented for now
   }
   else if (!name.compare("MicroBooNE_KDAR_pl_nu")) {
@@ -66,13 +66,13 @@ MicroBooNE_KDAR_nu::MicroBooNE_KDAR_nu(nuiskey samplekey) {
     fMCHist_true = new TH1D("MicroBooNE_KDAR_Kp_nu_MCHist_true",";K_{p} (MeV)",26,0,130);
     fMCStat_true = new TH1D("MicroBooNE_KDAR_Kp_nu_MCStat_true",";K_{p} (MeV)",26,0,130);
   }
-  else if (!name.compare("MicroBooNE_KDAR_CosP_nu")) {
-    fDist = kCosP;
-    objSuffix = "CosP";
-    fSettings.SetXTitle("1/#sigma cos#theta_{p}^{reco}");
-    fSettings.SetYTitle("d#sigma/dcos#theta_{p}^{reco}");
-    fMCHist_true = new TH1D("MicroBooNE_KDAR_CosP_nu_MCHist_true",";K_{p} and cos_{p} bin",288,-0.5,287.5);
-    fMCStat_true = new TH1D("MicroBooNE_KDAR_CosP_nu_MCStat_true",";K_{p} and cos_{p} bin",288,-0.5,287.5);
+  else if (!name.compare("MicroBooNE_KDAR_ThetaP_nu")) {
+    fDist = kThetaP;
+    objSuffix = "ThetaP";
+    fSettings.SetXTitle("1/#sigma #theta_{p}^{reco}");
+    fSettings.SetYTitle("d#sigma/d#theta_{p}^{reco}");
+    fMCHist_true = new TH1D("MicroBooNE_KDAR_ThetaP_nu_MCHist_true",";K_{p} and cos_{p} bin",288,-0.5,287.5);
+    fMCStat_true = new TH1D("MicroBooNE_KDAR_ThetaP_nu_MCStat_true",";K_{p} and cos_{p} bin",288,-0.5,287.5);
   }
   else if (!name.compare("MicroBooNE_KDAR_Mult_nu")) {
     fDist = kMult;
@@ -165,16 +165,17 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
   }
 
   double Kmu = event->GetHMFSParticle(13)->KE();
+  double ThetaMu = event->GetHMFSParticle(13)->fP.Vect().Theta();
   double CosMu = event->GetHMFSParticle(13)->fP.Vect().CosTheta();
-  double SinMu = TMath::Sin(event->GetHMFSParticle(13)->fP.Vect().Theta());
+  double SinMu = TMath::Sin(ThetaMu);
   double pMu = event->GetHMFSParticle(13)->p();
   double pl = pMu*CosMu;
   double pt = pMu*SinMu; 
   double Kp = 0.00000001;
-  double CosP = -2;
+  double ThetaP = 0;
   if (event->NumFSParticle(2212) != 0){ 
     Kp = event->GetHMFSParticle(2212)->KE();
-    CosP = event->GetHMFSParticle(2212)->fP.Vect().CosTheta();
+    ThetaP = event->GetHMFSParticle(2212)->fP.Vect().Theta();
   }
   double sprtQ2 = sqrt(event->GetQ2());
   double nu = event->Enu() - event->GetHMFSParticle(13)->E();
@@ -183,8 +184,8 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
   if (fDist == kKmu) {
     fXVar = Kmu; 
   }
-  else if (fDist == kCosMu) {
-    fXVar = CosMu; 
+  else if (fDist == kThetaMu) {
+    fXVar = ThetaMu; 
   }
   else if (fDist == kpl) {
     fXVar = pl;
@@ -195,8 +196,8 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
   else if (fDist == kKp || fDist == kMult) {
     fXVar = Kp;
   }
-  else if (fDist == kCosP) {
-    fXVar = GetBinTrueCosP(Kp,CosP);
+  else if (fDist == kThetaP) {
+    fXVar = GetBinTrueThetaP(Kp,ThetaP);
   }
   else if (fDist == kKvis) {
     fXVar = GetBinTrueKvis(Kp,Kmu);
@@ -208,7 +209,7 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
     fXVar = q;
   }
 
-  if(fDist != kKvis && fDist != kCosP){ 
+  if(fDist != kKvis && fDist != kThetaP){ 
     double maxXVar = fMCHist_true->GetXaxis()->GetBinUpEdge(fMCHist_true->GetNbinsX());
     if (fXVar>maxXVar) fXVar=maxXVar-0.0001;
   }
@@ -216,7 +217,7 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
 }
 
 
-int MicroBooNE_KDAR_nu::GetBinTrueCosP(double Kp, double CosP){
+int MicroBooNE_KDAR_nu::GetBinTrueThetaP(double Kp, double ThetaP){
 
   int found_slice = -1;
   int found_bin = -1;
@@ -244,14 +245,14 @@ int MicroBooNE_KDAR_nu::GetBinTrueCosP(double Kp, double CosP){
   }
   // Check all the bins
   for(int bin=0; bin<nbins; bin++){
-    if(CosP<bin*bin_width+bin_width+min && CosP>bin*bin_width+min){
+    if(ThetaP<bin*bin_width+bin_width+min && ThetaP>=bin*bin_width+min){
       found_bin = bin;
       break;
     }
   }
 
   if(found_slice<0 || found_bin<0){
-    NUIS_ERR(WRN,fName << ": WARNING, could not find {Kp,CosP} bin.");
+    NUIS_ERR(WRN,fName << ": WARNING, could not find {Kp,ThetaP} bin.");
     return -1;
   }
  
@@ -293,7 +294,7 @@ int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Kp, double Kmu){
       found_bin = nbins-1;
       break;
     }
-    if(Kmu<bin*bin_width+bin_width+min && Kmu>bin*bin_width+min){
+    if(Kmu<bin*bin_width+bin_width+min && Kmu>=bin*bin_width+min){
       found_bin = bin;
       break;
     } 
