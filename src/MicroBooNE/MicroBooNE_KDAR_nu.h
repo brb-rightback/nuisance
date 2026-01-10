@@ -48,13 +48,15 @@ public:
 
 private:
 
+  TH2D* fSmearingMatrix;
+
   TH1D* fMCHist_true; // Truth space equivalent of fMCHist, filled and then smeared to fMCHist 
   TH1D* fMCStat_true; // Truth space equivalent of fMCStat, filled and then smeared to fMCStat 
 
   int GetBinTrueKvis(double Kp, double Kmu);
   int GetBinTrueCosP(double Kp, double CosP);
 
-  enum Distribution { kKmu, kKp, kCosMu, kCosP, kKvis, kMult, ksqrtQ2, kq };
+  enum Distribution { kKmu=1, kKp=2, kCosMu=3, kpl=4, kpt=5, kCosP=6, kKvis=7, kMult=8, ksqrtQ2=9, kq=10 };
   Distribution fDist;
 
 };

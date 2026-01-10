@@ -161,7 +161,7 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
 
   double Kmu = event->GetHMFSParticle(13)->KE();
   double CosMu = event->GetHMFSParticle(13)->fP.Vect().CosTheta();
-  double SinMu = event->GetHMFSParticle(13)->fP.Vect().SinTheta();
+  double SinMu = TMath::Sin(event->GetHMFSParticle(13)->fP.Vect().Theta());
   double pMu = event->GetHMFSParticle(13)->p();
   double pl = pMu*CosMu;
   double pt = pMu*SinMu; 
@@ -172,7 +172,7 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
     CosP = event->GetHMFSParticle(2212)->fP.Vect().CosTheta();
   }
   double sprtQ2 = sqrt(event->GetQ2());
-  double nu = event->Enui() - event->GetHMFSParticle(13)->E();
+  double nu = event->Enu() - event->GetHMFSParticle(13)->E();
   double q = sprtQ2*sprtQ2 - nu*nu;
 
   if (fDist == kKmu) {
@@ -204,7 +204,7 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
   }
 
   if(fDist != kKvis && fDist != kCosP){ 
-    double maxXVar = fMCHist_true->GetXaxis()->GetBinUpEdge(fMCHist_true->GetNbins());
+    double maxXVar = fMCHist_true->GetXaxis()->GetBinUpEdge(fMCHist_true->GetNbinsX());
     if (fXVar>maxXVar) fXVar=maxXVar-0.0001;
   }
 
@@ -284,7 +284,7 @@ int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Kp, double Kmu){
   // Check all the bins
   for(int bin=0; bin<nbins; bin++){
     // First check overflow
-    if(Kp>bin_max){
+    if(Kp>max){
       found_bin = nbins-1;
       break;
     }

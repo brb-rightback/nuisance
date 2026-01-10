@@ -1196,6 +1196,18 @@ MeasurementBase *CreateSample(nuiskey samplekey) {
     } else if (!name.compare("MicroBooNE_NCpi0_XSec_AllNCpi0_nu")) {
       return (new MicroBooNE_NCpi0_XSec_nu<kAllNCpi0>(samplekey));
 
+    } else if (!name.compare("MicroBooNE_KDAR_Kmu_nu") ||
+               !name.compare("MicroBooNE_KDAR_CosMu_nu") ||
+               !name.compare("MicroBooNE_KDAR_pl_nu") ||
+               !name.compare("MicroBooNE_KDAR_pt_nu") ||
+               !name.compare("MicroBooNE_KDAR_Kp_nu") ||
+               !name.compare("MicroBooNE_KDAR_CosP_nu") ||
+               !name.compare("MicroBooNE_KDAR_Mult_nu") ||
+               !name.compare("MicroBooNE_KDAR_Kvis_nu") ||
+               !name.compare("MicroBooNE_KDAR_sqrtQ2_nu") ||
+               !name.compare("MicroBooNE_KDAR_q_nu")) {
+      return (new MicroBooNE_KDAR_nu(samplekey));
+/*
     } else if (!name.compare("MicroBooNE_KDAR_Kmu_nu")) {
       return (new MicroBooNE_KDAR_nu<kKmu>(samplekey));
     } else if (!name.compare("MicroBooNE_KDAR_CosMu_nu")) {
@@ -1216,6 +1228,7 @@ MeasurementBase *CreateSample(nuiskey samplekey) {
       return (new MicroBooNE_KDAR_nu<ksqrtQ2>(samplekey));
     } else if (!name.compare("MicroBooNE_KDAR_q_nu")) {
       return (new MicroBooNE_KDAR_nu<kq>(samplekey));
+*/
     } else
 #endif
 #ifdef MINERvA_ENABLED
