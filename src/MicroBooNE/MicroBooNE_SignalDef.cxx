@@ -220,7 +220,8 @@ bool isKDAR(FitEvent* event){
   if(nu_pdg != 14) return false;
   if(event->NumFSParticle(13) != 1) return false;
   // Double check the energy range
-  if(event->Enu()<235 || event->Enu()>236) return false;
+  if(event->Enu()<234 || event->Enu()>237) return false;
+  return true;
 }
 
     //----------------------------------------//

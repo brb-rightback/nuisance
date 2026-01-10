@@ -118,8 +118,8 @@ MicroBooNE_KDAR_nu::MicroBooNE_KDAR_nu(nuiskey samplekey) {
 
   fSettings.SetDescription(descrip);
   fSettings.SetTitle(name);
-  fSettings.SetAllowedTypes("DIAG/FREE,SHAPE");
-  fSettings.SetEnuRange(0.235, 0.236);
+  fSettings.SetAllowedTypes("FULL,DIAG");
+  fSettings.SetEnuRange(0.234, 0.237);
   fSettings.DefineAllowedTargets("Ar");
   fSettings.DefineAllowedSpecies("numu");
   FinaliseSampleSettings();
@@ -132,6 +132,7 @@ MicroBooNE_KDAR_nu::MicroBooNE_KDAR_nu(nuiskey samplekey) {
   fScaleFactor = 1; 
 
   SetCovarFromRootFile(inputFile, "Cov_" + objSuffix);
+  (*fFullCovar) *= 1E76;
   covar = StatUtils::GetInvert(fFullCovar, true);
   fDecomp = StatUtils::GetDecomp(fFullCovar);
 
@@ -141,6 +142,10 @@ MicroBooNE_KDAR_nu::MicroBooNE_KDAR_nu(nuiskey samplekey) {
   fSmearingMatrix->SetDirectory(0);
   inputRootFile->Close();
   assert(fSmearingMatrix);
+
+  // set the errors to the ones from covariance matrix to suppresses warnings
+  for(int i = 0; i < fDataHist->GetNbinsX(); i++)
+    fDataHist->SetBinError(i+1, sqrt((*fFullCovar)(i, i))*1E-38);
 
   // Final setup ------------------------------------------------------
   FinaliseMeasurement();
@@ -334,9 +339,8 @@ void MicroBooNE_KDAR_nu::FillHistograms() {
 
 void MicroBooNE_KDAR_nu::ApplySmearingMatrix() {
 
-  if (!fSmearMatrix) {
-    NUIS_ERR(WRN,
-             fName << ": attempted to apply smearing matrix, but none was set");
+  if (!fSmearingMatrix) {
+    NUIS_ERR(WRN,fName << ": attempted to apply smearing matrix, but none was set");
     return;
   }
 
@@ -347,24 +351,35 @@ void MicroBooNE_KDAR_nu::ApplySmearingMatrix() {
   smeared->Reset();
   smeared_stat->Reset();
 
+  // true = y; reco = x
+  int n_rbins=fSmearingMatrix->GetNbinsX();
+  int n_tbins=fSmearingMatrix->GetNbinsY();
+
   // Loop over reconstructed bins
-  // true = row; reco = column
-  for (int rbin = 0; rbin < fSmearMatrix->GetNcols(); ++rbin) {
+  for (int rbin = 0; rbin < n_rbins; ++rbin) {
     // Sum up the constributions from all true bins
     double rBinVal = 0;
     double rBinStat = 0;
     // Loop over true bins
-    for (int tbin = 0; tbin < fSmearMatrix->GetNrows(); ++tbin) {
+    for (int tbin = 0; tbin < n_tbins; ++tbin) {
       rBinVal +=
-          (*fSmearMatrix)(tbin, rbin) * unsmeared->GetBinContent(tbin + 1);
+          fSmearingMatrix->GetBinContent(rbin+1, tbin+1) * unsmeared->GetBinContent(tbin+1);
       rBinStat +=
-          (*fSmearMatrix)(tbin, rbin) * unsmeared_stat->GetBinContent(tbin + 1);
+          fSmearingMatrix->GetBinContent(rbin+1, tbin+1) * unsmeared_stat->GetBinContent(tbin+1);
     }
-    smeared->SetBinContent(rbin + 1, rBinVal);
-    smeared_stat->SetBinContent(rbin + 1, rBinStat);
+    smeared->SetBinContent(rbin+1, rBinVal);
+    smeared_stat->SetBinContent(rbin+1, rBinStat);
   }
   fMCHist = (TH1D *)smeared->Clone();
   fMCStat = (TH1D *)smeared_stat->Clone();
+
+  // Now normalize to unity
+  double norm_factor=1;
+  for (int rbin = 0; rbin < n_rbins; ++rbin) {
+    norm_factor+=fMCHist->GetBinContent(rbin+1);
+  }
+  fMCHist->Scale(1/norm_factor);
+  fMCStat->Scale(1/norm_factor);
 
   return;
 }
