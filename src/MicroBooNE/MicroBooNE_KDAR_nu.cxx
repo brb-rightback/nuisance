@@ -32,8 +32,8 @@ MicroBooNE_KDAR_nu::MicroBooNE_KDAR_nu(nuiskey samplekey) {
     objSuffix = "Kmu";
     fSettings.SetXTitle("K_{#mu}^{reco} (MeV)");
     fSettings.SetYTitle("1/#sigma d#sigma/dK_{#mu}^{reco}");
-    fMCHist_true = new TH1D("MicroBooNE_KDAR_Kmu_nu_MCHist_true",";K_{#mu} (MeV)",26,0,130);
-    fMCStat_true = new TH1D("MicroBooNE_KDAR_Kmu_nu_MCStat_true",";K_{#mu} (MeV)",26,0,130);
+    fMCHist_true = new TH1D("MicroBooNE_KDAR_Kmu_nu_MCHist_true",";K_{#mu} (MeV)",24,0,120);
+    fMCStat_true = new TH1D("MicroBooNE_KDAR_Kmu_nu_MCStat_true",";K_{#mu} (MeV)",24,0,120);
   }
   else if (!name.compare("MicroBooNE_KDAR_ThetaMu_nu")) {
     fDist = kThetaMu;
@@ -82,13 +82,13 @@ MicroBooNE_KDAR_nu::MicroBooNE_KDAR_nu(nuiskey samplekey) {
     fMCHist_true = new TH1D("MicroBooNE_KDAR_Mult_nu_MCHist_true",";K_{p} (MeV)",26,0,130);
     fMCStat_true = new TH1D("MicroBooNE_KDAR_Mult_nu_MCStat_true",";K_{p} (MeV)",26,0,130);
   }
-  else if (!name.compare("MicroBooNE_KDAR_Kvis_nu")) {
-    fDist = kKvis;
-    objSuffix = "Kvis";
-    fSettings.SetXTitle("K_{vis}^{reco} (MeV)");
-    fSettings.SetYTitle("1/#sigma d#sigma/dK_{vis}^{reco}");
-    fMCHist_true = new TH1D("MicroBooNE_KDAR_Kvis_nu_MCHist_true",";K_{p} and K_{#mu} bin",160,-0.5,159.5);
-    fMCStat_true = new TH1D("MicroBooNE_KDAR_Kvis_nu_MCStat_true",";K_{p} and K_{#mu} bin",160,-0.5,159.5);
+  else if (!name.compare("MicroBooNE_KDAR_TrackKvis_nu")) {
+    fDist = kTrackKvis;
+    objSuffix = "trackKvis";
+    fSettings.SetXTitle("Track-only K_{vis}^{reco} (MeV)");
+    fSettings.SetYTitle("1/#sigma d#sigma/dK_{vis,track}^{reco}");
+    fMCHist_true = new TH1D("MicroBooNE_KDAR_TrackKvis_nu_MCHist_true",";K_{p} and K_{#mu} bin",160,-0.5,159.5);
+    fMCStat_true = new TH1D("MicroBooNE_KDAR_TrackKvis_nu_MCStat_true",";K_{p} and K_{#mu} bin",160,-0.5,159.5);
   }
   else if (!name.compare("MicroBooNE_KDAR_sqrtQ2_nu")) {
     fDist = ksqrtQ2;
@@ -105,6 +105,14 @@ MicroBooNE_KDAR_nu::MicroBooNE_KDAR_nu(nuiskey samplekey) {
     fSettings.SetYTitle("1/#sigma d#sigma/dq^{reco}");
     fMCHist_true = new TH1D("MicroBooNE_KDAR_q_nu_MCHist_true",";q",40,0,480);
     fMCStat_true = new TH1D("MicroBooNE_KDAR_q_nu_MCStat_true",";q",40,0,480);
+  }
+  else if (!name.compare("MicroBooNE_KDAR_Kvis_nu")) {
+    fDist = kKvis;
+    objSuffix = "Kvis";
+    fSettings.SetXTitle("K_{vis}^{reco} (MeV)");
+    fSettings.SetYTitle("1/#sigma d#sigma/dK_{vis}^{reco}");
+    fMCHist_true = new TH1D("MicroBooNE_KDAR_Kvis_nu_MCHist_true",";P. mult., K_{p} and K_{#mu} bin",1610,-0.5,1609.5);
+    fMCStat_true = new TH1D("MicroBooNE_KDAR_Kvis_nu_MCStat_true",";P. mult., K_{p} and K_{#mu} bin",1610,-0.5,15609.5);
   }
   else {
     assert(false);
@@ -173,7 +181,8 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
   double pt = pMu*SinMu; 
   double Kp = 0.00000001;
   double ThetaP = 0;
-  if (event->NumFSParticle(2212) != 0){ 
+  double Pmult = event->NumFSParticle(2212);
+  if (Pmult != 0){ 
     Kp = event->GetHMFSParticle(2212)->KE();
     ThetaP = event->GetHMFSParticle(2212)->fP.Vect().Theta();
   }
@@ -199,14 +208,17 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
   else if (fDist == kThetaP) {
     fXVar = GetBinTrueThetaP(Kp,ThetaP);
   }
-  else if (fDist == kKvis) {
-    fXVar = GetBinTrueKvis(Kp,Kmu);
+  else if (fDist == kTrackKvis) {
+    fXVar = GetBinTrueTrackKvis(Kp,Kmu);
   }
   else if (fDist == ksqrtQ2) {
     fXVar = sprtQ2;
   }
   else if (fDist == kq) {
     fXVar = q;
+  }
+  else if (fDist == kKvis) {
+    fXVar = GetBinTrueKvis(Pmult,Kp,Kmu);
   }
 
   if(fDist != kKvis && fDist != kThetaP){ 
@@ -260,8 +272,88 @@ int MicroBooNE_KDAR_nu::GetBinTrueThetaP(double Kp, double ThetaP){
 
 };
 
+int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Pmult, double Kp, double Kmu){
 
-int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Kp, double Kmu){
+  int found_Pmult = -1;
+  int found_slice = -1;
+  int found_bin = -1;
+  int Pmult_width=1;
+  int Pmult_min = 0;
+  int Pmult_max = 4;
+  int Pmult_nbins = int( (Pmult_max-Pmult_min)/Pmult_width);
+  int slice_width=5;
+  int slice_min = 0;
+  int slice_max = 115;
+  int slice_nbins = int( (slice_max-slice_min)/slice_width);
+  int bin_width=5;
+  int min = 0;
+  int max = 115;
+  int nbins = int( (max-min)/bin_width);
+
+  // Check the multiplicity
+  // First check overflow
+  if(Pmult>=Pmult_max){
+    found_Pmult = Pmult_nbins-1;
+  }
+  else{
+    // Then check all the bins
+    for(int Pmult_bin=0; Pmult_bin<Pmult_nbins; Pmult_bin++){
+      if(Pmult<Pmult_bin*Pmult_width+Pmult_width+Pmult_min && Pmult>=Pmult_bin*Pmult_width+Pmult_min){
+        found_Pmult = Pmult_bin;
+        break;
+      }
+    }
+  }
+
+  // Check all slices if we have a proton
+  // Do we have a proton?
+  if (found_Pmult==0){
+    found_slice = 0;
+  }
+  // Then check overflow
+  else if(Kp>=slice_max){
+    found_slice = slice_nbins-1;
+  }
+  // Now check all 
+  else{
+    for(int slice_bin=0; slice_bin<slice_nbins; slice_bin++){
+      if(Kp<slice_bin*slice_width+slice_width+slice_min && Kp>=slice_bin*slice_width+slice_min){
+        found_slice = slice_bin;
+        break;
+      }
+    }
+  }
+
+  // First check overflow
+  if(Kmu>=max){
+    found_bin = nbins-1;
+  }
+  else{
+    // Check all the bins
+    for(int bin=0; bin<nbins; bin++){
+      if(Kmu<bin*bin_width+bin_width+min && Kmu>=bin*bin_width+min){
+        found_bin = bin;
+        break;
+      }
+    }
+  }
+
+
+  if(found_Pmult<0 || found_slice<0 || found_bin<0){
+    NUIS_ERR(WRN,fName << ": WARNING, could not find {Pmult,Kp,Kmu} bin.");
+    return -1;
+  }
+
+  int bin = found_bin;
+  if (found_Pmult>0){
+    bin = nbins + (found_Pmult-1)*(slice_nbins*nbins) + (found_slice*nbins + found_bin);
+  }
+  return bin;
+
+
+}
+
+int MicroBooNE_KDAR_nu::GetBinTrueTrackKvis(double Kp, double Kmu){
 
   int found_slice = -1;
   int found_bin = -1;

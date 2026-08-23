@@ -53,10 +53,11 @@ private:
   TH1D* fMCHist_true; // Truth space equivalent of fMCHist, filled and then smeared to fMCHist 
   TH1D* fMCStat_true; // Truth space equivalent of fMCStat, filled and then smeared to fMCStat 
 
-  int GetBinTrueKvis(double Kp, double Kmu);
+  int GetBinTrueTrackKvis(double Kp, double Kmu);
+  int GetBinTrueKvis(double Pmult, double Kp, double Kmu);
   int GetBinTrueThetaP(double Kp, double ThetaP);
 
-  enum Distribution { kKmu=1, kKp=2, kThetaMu=3, kpl=4, kpt=5, kThetaP=6, kKvis=7, kMult=8, ksqrtQ2=9, kq=10 };
+  enum Distribution { kKmu=1, kKp=2, kThetaMu=3, kpl=4, kpt=5, kThetaP=6, kTrackKvis=7, kMult=8, ksqrtQ2=9, kq=10 , kKvis=11};
   Distribution fDist;
 
 };
