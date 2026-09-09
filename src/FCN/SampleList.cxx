@@ -1202,11 +1202,13 @@ MeasurementBase *CreateSample(nuiskey samplekey) {
                !name.compare("MicroBooNE_KDAR_pt_nu") ||
                !name.compare("MicroBooNE_KDAR_Kp_nu") ||
                !name.compare("MicroBooNE_KDAR_ThetaP_nu") ||
-               !name.compare("MicroBooNE_KDAR_Mult_nu") ||
+               !name.compare("MicroBooNE_KDAR_Pmult_nu") ||
                !name.compare("MicroBooNE_KDAR_TrackKvis_nu") ||
-               !name.compare("MicroBooNE_KDAR_sqrtQ2_nu") ||
+               !name.compare("MicroBooNE_KDAR_Q2_nu") ||
                !name.compare("MicroBooNE_KDAR_q_nu") ||
-               !name.compare("MicroBooNE_KDAR_Kvis_nu")) {
+               !name.compare("MicroBooNE_KDAR_Kvis_nu") ||
+               !name.compare("MicroBooNE_KDAR_TrackFracE_nu") ||
+               !name.compare("MicroBooNE_KDAR_FracE_nu")) {
       return (new MicroBooNE_KDAR_nu(samplekey));
     } else
 #endif

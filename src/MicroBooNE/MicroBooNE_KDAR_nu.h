@@ -57,7 +57,7 @@ private:
   int GetBinTrueKvis(double Pmult, double Kp, double Kmu);
   int GetBinTrueThetaP(double Kp, double ThetaP);
 
-  enum Distribution { kKmu=1, kKp=2, kThetaMu=3, kpl=4, kpt=5, kThetaP=6, kTrackKvis=7, kMult=8, ksqrtQ2=9, kq=10 , kKvis=11};
+  enum Distribution { kKmu=1, kKp=2, kThetaMu=3, kpl=4, kpt=5, kThetaP=6, kTrackKvis=7, kPmult=8, kQ2=9, kq=10 , kKvis=11, kTrackFracE=12, kFracE=13};
   Distribution fDist;
 
 };
