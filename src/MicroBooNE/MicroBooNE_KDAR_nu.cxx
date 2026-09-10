@@ -87,8 +87,8 @@ MicroBooNE_KDAR_nu::MicroBooNE_KDAR_nu(nuiskey samplekey) {
     objSuffix = "trackKvis";
     fSettings.SetXTitle("Track-only K_{vis}^{reco} (MeV)");
     fSettings.SetYTitle("1/#sigma d#sigma/dK_{vis,track}^{reco}");
-    fMCHist_true = new TH1D("MicroBooNE_KDAR_TrackKvis_nu_MCHist_true",";K_{p} and K_{#mu} bin",123,-0.5,123.5);
-    fMCStat_true = new TH1D("MicroBooNE_KDAR_TrackKvis_nu_MCStat_true",";K_{p} and K_{#mu} bin",123,-0.5,123.5);
+    fMCHist_true = new TH1D("MicroBooNE_KDAR_TrackKvis_nu_MCHist_true",";K_{p} and K_{#mu} bin",123,-0.5,122.5);
+    fMCStat_true = new TH1D("MicroBooNE_KDAR_TrackKvis_nu_MCStat_true",";K_{p} and K_{#mu} bin",123,-0.5,122.5);
   }
   else if (!name.compare("MicroBooNE_KDAR_TrackFracE_nu")) {
     fDist = kTrackFracE;
@@ -127,8 +127,8 @@ MicroBooNE_KDAR_nu::MicroBooNE_KDAR_nu(nuiskey samplekey) {
     objSuffix = "FracE";
     fSettings.SetXTitle("K_#mu^{reco}/K_{vis}^{reco} (MeV)");
     fSettings.SetYTitle("1/#sigma d#sigma/d(K_#mu^{reco}K_{vis}^{reco})");
-    fMCHist_true = new TH1D("MicroBooNE_KDAR_Kvis_nu_MCHist_true",";P. mult., K_{p} and K_{#mu} bin",1201,-0.5,1200.5);
-    fMCStat_true = new TH1D("MicroBooNE_KDAR_Kvis_nu_MCStat_true",";P. mult., K_{p} and K_{#mu} bin",1201,-0.5,1200.5);
+    fMCHist_true = new TH1D("MicroBooNE_KDAR_FracE_nu_MCHist_true",";P. mult., K_{p} and K_{#mu} bin",1201,-0.5,1200.5);
+    fMCStat_true = new TH1D("MicroBooNE_KDAR_FracE_nu_MCStat_true",";P. mult., K_{p} and K_{#mu} bin",1201,-0.5,1200.5);
   }
   else {
     assert(false);
@@ -196,11 +196,16 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
   double pl = pMu*CosMu;
   double pt = pMu*SinMu; 
   double Kp = 0.00000001;
+  double sumKp = 0.00000001;
   double ThetaP = 0;
   double Pmult = event->NumFSParticle(2212);
-  if (Pmult != 0){ 
+  if (Pmult > 0){ 
     Kp = event->GetHMFSParticle(2212)->KE();
-    ThetaP = event->GetHMFSParticle(2212)->fP.Vect().Theta();
+    ThetaP = event->GetHMFSParticle(2212)->fP.Vect().Theta()*180/3.14159;
+    std::vector<FitParticle *> allFSProtons = event->GetAllFSProton();
+    for (const auto& it:allFSProtons){
+      sumKp += it->KE();
+    }
   }
   double Q2 = sqrt(event->GetQ2())*1000; // GeV->MeV
   double nu = event->Enu() - event->GetHMFSParticle(13)->E();
@@ -234,7 +239,7 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
     fXVar = q;
   }
   else if (fDist == kKvis || fDist == kFracE) {
-    fXVar = GetBinTrueKvis(Pmult,Kp,Kmu);
+    fXVar = GetBinTrueKvis(Pmult,sumKp,Kmu);
   }
 
   if(fDist != kTrackKvis && fDist != kKvis && fDist != kThetaP){ 
@@ -268,7 +273,7 @@ int MicroBooNE_KDAR_nu::GetBinTrueThetaP(double Kp, double ThetaP){
   // Check all slices
   for(int slice_bin=0; slice_bin<slice_nbins; slice_bin++){
     // First check overflow
-    if(Kp>slice_max){
+    if(Kp>=slice_max){
       found_slice = slice_nbins-1;
       break;
     }
@@ -292,12 +297,17 @@ int MicroBooNE_KDAR_nu::GetBinTrueThetaP(double Kp, double ThetaP){
     bin_count = 210+(found_slice-12)*(nbins-5);
     temp_nbins = nbins-5;
   }else{
-    bin_count = 237;
+    bin_count = 236;
     temp_nbins = nbins-7;
   }
 
   // Check all the bins
   for(int bin=0; bin<temp_nbins; bin++){
+    // First check overflow
+    if(ThetaP>=temp_nbins*bin_width){
+      found_bin = temp_nbins-1;
+      break;
+    }
     if(ThetaP<bin*bin_width+bin_width+min && ThetaP>=bin*bin_width+min){
       found_bin = bin;
       break;
@@ -306,6 +316,7 @@ int MicroBooNE_KDAR_nu::GetBinTrueThetaP(double Kp, double ThetaP){
 
   // Add how many bins we burned through in the given slice
   bin_count += found_bin;
+  //std::cout<<bin_count<<" "<<Kp<<" "<<ThetaP<<" "<<found_slice<<" "<<found_bin<<std::endl;
 
   // Check we found the bin and return
   if(found_slice<0 || found_bin<0){
@@ -352,7 +363,7 @@ int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Pmult, double Kp, double Kmu){
   }
 
   int temp_bin_min = min;
-  int temp_nbins = 0;
+  int temp_nbins = nbins;
 
   if(found_Pmult==1){
     bin_count = 22;
@@ -368,10 +379,10 @@ int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Pmult, double Kp, double Kmu){
 
   // Check the bins
   // First check overflow and underflow, the if if else if is intentional, need to add all bins
-  if(Kmu>=max){
+  if(Kmu>=slice_max){
     found_slice = slice_nbins-1;
   }
-  if(Kmu<=min){
+  if(Kmu<=slice_min){
     found_slice = 0;
   }
   else{
@@ -381,13 +392,15 @@ int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Pmult, double Kp, double Kmu){
         found_slice = slice_bin;
         break;
       }
-    // Add how many bins are in this slice to the running total
-    double min_Kmu = slice_bin*slice_width;
-    double min_Kp = 160-min_Kmu;
-    int nbins_this_slice = 1+int(min_Kp/bin_width) - (found_Pmult-1);
-    if (nbins_this_slice>temp_nbins) nbins_this_slice=temp_nbins;
-    bin_count += nbins_this_slice;
-    temp_nbins = nbins_this_slice;
+      if(found_Pmult>0){
+        // Add how many bins are in this slice to the running total
+        double min_Kmu = slice_bin*slice_width+slice_min;
+        double min_Kp = 159-min_Kmu;
+        int nbins_this_slice = 1+int(min_Kp/bin_width) - (found_Pmult-1);
+        if (nbins_this_slice>temp_nbins) nbins_this_slice=temp_nbins;
+        bin_count += nbins_this_slice;
+        temp_nbins = nbins_this_slice;
+      }else{ bin_count+=1; }
     }
   }
 
@@ -397,8 +410,12 @@ int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Pmult, double Kp, double Kmu){
     found_bin = 0;
   }
   // Then check overflow
-  else if(Kp>=max){
+  else if(Kp>=temp_nbins*bin_width+temp_bin_min){
     found_bin = temp_nbins-1;
+  }
+  // Then check underflow
+  else if(Kp<=temp_bin_min){
+    found_bin = 0;
   }
   // Now check all 
   else{
@@ -412,10 +429,11 @@ int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Pmult, double Kp, double Kmu){
 
   // Add how many bins we burned through in the given slice
   bin_count += found_bin;
+  //std::cout<<bin_count<<" "<<Pmult<<" "<<Kmu<<" "<<Kp<<" "<<found_Pmult<<" "<<found_slice<<" "<<found_bin<<std::endl;
 
   // Check we found the bin and return
   if(found_Pmult<0 || found_slice<0 || found_bin<0){
-    NUIS_ERR(WRN,fName << ": WARNING, could not find {Pmult,Kp,Kmu} bin.");
+    NUIS_ERR(WRN,fName << ": WARNING, could not find {Pmult,Kp,Kmu} bin. " << found_Pmult<<" "<<Pmult<<" "<<found_slice<<" "<<Kmu<<" "<<found_bin<<" "<<Kp);
     return -1;
   }
   return bin_count;
@@ -453,8 +471,8 @@ int MicroBooNE_KDAR_nu::GetBinTrueTrackKvis(double Kp, double Kmu){
       break;
     }
     // Add how many bins are in this slice to the running total
-    double min_Kmu = slice_bin*slice_width;
-    double min_Kp = 160-min_Kmu;
+    double min_Kmu = slice_bin*slice_width+slice_min;
+    double min_Kp = 159-min_Kmu;
     int nbins_this_slice = 1+int(min_Kp/bin_width);
     if (nbins_this_slice>nbins) nbins_this_slice=nbins;
     bin_count += nbins_this_slice;
@@ -464,8 +482,8 @@ int MicroBooNE_KDAR_nu::GetBinTrueTrackKvis(double Kp, double Kmu){
   // Check all the bins
   for(int bin=0; bin<temp_nbins; bin++){
     // First check overflow
-    if(Kp>=max){
-      found_bin = nbins-1;
+    if(Kp>=temp_nbins*bin_width+min){
+      found_bin = temp_nbins-1;
       break;
     }
     if(Kp<bin*bin_width+bin_width+min && Kp>=bin*bin_width+min){
@@ -476,6 +494,7 @@ int MicroBooNE_KDAR_nu::GetBinTrueTrackKvis(double Kp, double Kmu){
 
   // Add how many bins we burned through in the given slice
   bin_count += found_bin;
+  //std::cout<<bin_count<<" "<<Kmu<<" "<<Kp<<" "<<found_slice<<" "<<found_bin<<std::endl;
 
   // Check we found the bin and return
   if(found_slice<0 || found_bin<0){
@@ -502,13 +521,8 @@ void MicroBooNE_KDAR_nu::FillHistograms() {
     } else {
       fMCHist_true->Fill(fXVar, Weight);
       fMCStat_true->Fill(fXVar, 1.0);
-      //if (fMCHist_Modes)
-	//fMCHist_Modes->Fill(Mode, fXVar, Weight);
     }
 
-    //fMCFine->Fill(fXVar, Weight);
-    //if (fMCFine_Modes)
-    //  fMCFine_Modes->Fill(Mode, fXVar, Weight);
   }
 
   return;
@@ -533,6 +547,13 @@ void MicroBooNE_KDAR_nu::ApplySmearingMatrix() {
   int n_rbins=fSmearingMatrix->GetNbinsX();
   int n_tbins=fSmearingMatrix->GetNbinsY();
 
+  //std::cout<<fMCHist_true->GetTitle()<<std::endl;
+  //for (int tbin = 0; tbin < n_tbins; ++tbin) {
+  //  std::cout<<unsmeared->GetBinContent(tbin+1)<<", ";
+  //}
+  //std::cout<<std::endl;
+  //std::cout<<std::endl;
+
   // Loop over reconstructed bins
   for (int rbin = 0; rbin < n_rbins; ++rbin) {
     // Sum up the constributions from all true bins
@@ -550,16 +571,6 @@ void MicroBooNE_KDAR_nu::ApplySmearingMatrix() {
   }
   fMCHist = (TH1D *)smeared->Clone();
   fMCStat = (TH1D *)smeared_stat->Clone();
-
-/*
-  // Now normalize to unity
-  double norm_factor=1;
-  for (int rbin = 0; rbin < n_rbins; ++rbin) {
-    norm_factor+=fMCHist->GetBinContent(rbin+1);
-  }
-  fMCHist->Scale(1/norm_factor);
-  fMCStat->Scale(1/norm_factor);
-*/
 
   return;
 
