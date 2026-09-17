@@ -198,13 +198,20 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
   double Kp = 0.00000001;
   double sumKp = 0.00000001;
   double ThetaP = 0;
-  double Pmult = event->NumFSParticle(2212);
+  int Pmult = event->NumFSParticle(2212);
   if (Pmult > 0){ 
-    Kp = event->GetHMFSParticle(2212)->KE();
-    ThetaP = event->GetHMFSParticle(2212)->fP.Vect().Theta()*180/3.14159;
+    Pmult = 0;
     std::vector<FitParticle *> allFSProtons = event->GetAllFSProton();
     for (const auto& it:allFSProtons){
-      sumKp += it->KE();
+      double this_KE = it->E()-938; 
+      if(this_KE>0) { 
+        Pmult+=1;
+        sumKp += this_KE; 
+        if(this_KE>Kp){ 
+          Kp = this_KE; 
+          ThetaP = it->fP.Vect().Theta()*180/3.14159;
+        }
+      }      
     }
   }
   double Q2 = sqrt(event->GetQ2())*1000; // GeV->MeV
@@ -378,11 +385,20 @@ int MicroBooNE_KDAR_nu::GetBinTrueKvis(double Pmult, double Kp, double Kmu){
   }
 
   // Check the bins
-  // First check overflow and underflow, the if if else if is intentional, need to add all bins
+  // First check overflow and underflow.
   if(Kmu>=slice_max){
     found_slice = slice_nbins-1;
+    if(found_Pmult==0){
+      bin_count = 21;
+    }else if(found_Pmult==1){
+      bin_count = 427;
+    }else if(found_Pmult==2){
+      bin_count = 821;
+    }else if(found_Pmult==3){
+      bin_count = 1193;
+    }
   }
-  if(Kmu<=slice_min){
+  else if(Kmu<=slice_min){
     found_slice = 0;
   }
   else{
