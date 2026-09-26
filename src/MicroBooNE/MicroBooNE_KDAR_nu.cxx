@@ -205,6 +205,7 @@ void MicroBooNE_KDAR_nu::FillEventVariables(FitEvent* event) {
     for (const auto& it:allFSProtons){
       double this_KE = it->E()-938; 
       if(this_KE>0) { 
+        this_KE = sqrt(it->p()*it->p() + 938.27*938.27) - 938.27;
         Pmult+=1;
         sumKp += this_KE; 
         if(this_KE>Kp){ 
