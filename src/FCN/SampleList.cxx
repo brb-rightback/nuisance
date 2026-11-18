@@ -193,6 +193,7 @@
 #include "MicroBooNE_BNB_NCpi0_2024_XSec_nu.h"
 #include "MicroBooNE_BNB_NumuCC0PiNp_2025_XSec_nu.h"
 #include "MicroBooNE_BNB_NumuCC0Pi_2025_XSec_nu.h"
+#include "MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_nu.h"
 #endif
 
 #ifdef MINERvA_ENABLED
@@ -1223,6 +1224,19 @@ MeasurementBase *CreateSample(nuiskey samplekey) {
       return (new MicroBooNE_BNB_NCpi0_2024_XSec_nu<kAllNCpi0>(samplekey));
     } else if ( !name.compare("MicroBooNE_BNB_NumuCC0PiNp_2025_XSec_nu") ) {
       return ( new MicroBooNE_BNB_NumuCC0PiNp_2025_XSec_nu(samplekey) );
+    } else if (!name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_Kmu_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_pl_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_pt_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_Kp_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_ThetaP_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_Pmult_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_TrackKvis_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_Q2_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_q_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_Kvis_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_TrackFracE_nu") ||
+               !name.compare("MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_FracE_nu")) {
+      return (new MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_nu(samplekey));
     } else
 
 #endif
