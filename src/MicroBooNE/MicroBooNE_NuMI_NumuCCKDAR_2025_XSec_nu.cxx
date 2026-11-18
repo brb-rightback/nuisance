@@ -546,41 +546,27 @@ void MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_nu::ApplySmearingMatrix() {
     return;
   }
 
-  TH1D *unsmeared = (TH1D *)fMCHist_true->Clone();
-  TH1D *smeared = (TH1D *)fMCHist->Clone();
-  TH1D *unsmeared_stat = (TH1D *)fMCStat_true->Clone();
-  TH1D *smeared_stat = (TH1D *)fMCStat->Clone();
-  smeared->Reset();
-  smeared_stat->Reset();
-
   // true = y; reco = x
   int n_rbins=fSmearingMatrix->GetNbinsX();
   int n_tbins=fSmearingMatrix->GetNbinsY();
 
-  //std::cout<<fMCHist_true->GetTitle()<<std::endl;
-  //for (int tbin = 0; tbin < n_tbins; ++tbin) {
-  //  std::cout<<unsmeared->GetBinContent(tbin+1)<<", ";
-  //}
-  //std::cout<<std::endl;
-  //std::cout<<std::endl;
+  // Fill the reco-space histograms in place (fMCHist_true/fMCStat_true are only read)
+  fMCHist->Reset();
+  fMCStat->Reset();
 
   // Loop over reconstructed bins
   for (int rbin = 0; rbin < n_rbins; ++rbin) {
-    // Sum up the constributions from all true bins
+    // Sum up the contributions from all true bins
     double rBinVal = 0;
     double rBinStat = 0;
-    // Loop over true bins
     for (int tbin = 0; tbin < n_tbins; ++tbin) {
-      rBinVal +=
-          fSmearingMatrix->GetBinContent(rbin+1, tbin+1) * unsmeared->GetBinContent(tbin+1);
-      rBinStat +=
-          fSmearingMatrix->GetBinContent(rbin+1, tbin+1) * unsmeared_stat->GetBinContent(tbin+1);
+      double r = fSmearingMatrix->GetBinContent(rbin+1, tbin+1);
+      rBinVal  += r * fMCHist_true->GetBinContent(tbin+1);
+      rBinStat += r * fMCStat_true->GetBinContent(tbin+1);
     }
-    smeared->SetBinContent(rbin+1, rBinVal);
-    smeared_stat->SetBinContent(rbin+1, rBinStat);
+    fMCHist->SetBinContent(rbin+1, rBinVal);
+    fMCStat->SetBinContent(rbin+1, rBinStat);
   }
-  fMCHist = (TH1D *)smeared->Clone();
-  fMCStat = (TH1D *)smeared_stat->Clone();
 
   return;
 
@@ -594,7 +580,7 @@ void MicroBooNE_NuMI_NumuCCKDAR_2025_XSec_nu::ConvertEventRates() {
 
   int n_rbins=fMCHist->GetNbinsX();
   // Now normalize to unity
-  double norm_factor=1;
+  double norm_factor=0;
   for (int rbin = 0; rbin < n_rbins; ++rbin) {
     norm_factor+=fMCHist->GetBinContent(rbin+1);
   }
